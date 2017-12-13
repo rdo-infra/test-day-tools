@@ -1,0 +1,2 @@
+test-day.rdoproject.org ansible_user=root
+test-day-gateway.rdoproject.org ansible_user=root
