@@ -1,0 +1,98 @@
+- name: Create OpenStack User
+  hosts: openstack_nodes
+  become: yes
+  tasks:
+    # This is a bit of a hack... let's improve packstack to provision a
+    # clouds.yaml file instead of keystonerc_admin.
+    # For backwards compatibility we can make keystonerc_admin export OS_CLOUD.
+    - name: Read username
+      no_log: true
+      shell: grep "export OS_USERNAME" /root/keystonerc_admin | cut -f2 -d =
+      register: username
+
+    - name: Read password
+      no_log: true
+      shell: grep "export OS_PASSWORD" /root/keystonerc_admin | cut -f2 -d =
+      register: password
+
+    - name: Read auth_url
+      no_log: true
+      shell: grep "export OS_AUTH_URL" /root/keystonerc_admin | cut -f2 -d =
+      register: auth_url
+
+    - name: Read project_name
+      no_log: true
+      shell: grep "export OS_PROJECT_NAME" /root/keystonerc_admin | cut -f2 -d =
+      register: project_name
+
+    - name: Read user domain
+      no_log: true
+      shell: grep "export OS_USER_DOMAIN_NAME" /root/keystonerc_admin | cut -f2 -d =
+      register: user_domain
+
+    - name: Read project domain
+      no_log: true
+      shell: grep "export OS_PROJECT_DOMAIN_NAME" /root/keystonerc_admin | cut -f2 -d =
+      register: project_domain
+
+    - name: Read identity version
+      no_log: true
+      shell: grep "export OS_IDENTITY_API_VERSION" /root/keystonerc_admin | cut -f2 -d =
+      register: identity_version
+
+    - name: Ensure /etc/openstack exists
+      file:
+        path: /etc/openstack
+        state: directory
+        mode: 0700
+
+    # So we can finally use Ansible OpenStack modules
+    - name: Configure clouds.yaml
+      no_log: true
+      copy:
+        dest: /etc/openstack/clouds.yaml
+        mode: 0600
+        content: |
+          cache:
+            expiration:
+              server: 5
+              port: 5
+              floating-ip: 5
+          clouds:
+            self:
+              auth:
+                username: {{ username.stdout }}
+                password: {{ password.stdout }}
+                auth_url: {{ auth_url.stdout }}
+                project_name: {{ project_name.stdout }}
+                user_domain_name: {{ user_domain_name.stdout }}
+                project_domain_name: {{ project_domain_name.stdout }}
+              identity_api_version: '{{ identity_version.stdout }}'
+
+    - name: Ensure users directory exists
+      file:
+        path: /root/users
+        state: directory
+        mode: 0700
+
+    - name: Create projects
+      os_project:
+        cloud: self
+        state: present
+        name: "{{ item }}"
+        description: Test day project
+        domain_id: "{{ user_domain_name }}"
+        enabled: True
+      with_items: "{{ usernames }}"
+
+    - name: Create users
+      os_user:
+        cloud: self
+        state: present
+        name: "{{ item }}"
+        password: "{{ lookup('password', '/root/users' + item length=15') }}"
+        update_password: on_create
+        email: demo@example.com
+        domain: "{{ user_domain_name }}"
+        default_project: "{{ item }}"
+      with_items: "{{ usernames }}"
