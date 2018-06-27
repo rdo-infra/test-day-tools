@@ -1,0 +1,5 @@
+- name: Do something
+  hosts: openstack_nodes
+  tasks:
+    - name: Build Triple O Containers
+      script: build_containers.sh
