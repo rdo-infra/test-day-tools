@@ -1,0 +1,6 @@
+- name: Do something
+  hosts: openstack_nodes
+  tasks:
+    - name: Something
+      debug:
+        msg: Do
