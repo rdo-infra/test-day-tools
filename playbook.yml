@@ -1,0 +1,14 @@
+- name: Do Container Build
+  hosts: openstack_nodes
+  tasks:
+#    - name: Setup Configuration Files
+#      copy: src={{ item.src }} dest={{ item.dest }}
+#      with_items:
+#         - { src: 'tripleo_kolla_template_overrides_ppc64le.j2', dest: '/tmp/tripleo_kolla_template_overrides_ppc64le.j2' }
+#         - { src: 'kolla-build-ppc64le.conf', dest: '/tmp/kolla-build-ppc64le.conf' }
+
+    - name: Build Triple O Containers
+      script: build_containers.sh
+      register: out
+
+    - debug: var=out.stdout_lines
