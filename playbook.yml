@@ -1,0 +1,8 @@
+name: Add repo and install ceph-luminous
+  hosts: openstack_nodes
+  tasks:
+    - name: Build Triple O Containers
+      script: install_ceph_luminous.sh
+      register: out
+
+    - debug: var=out.stdout_lines
