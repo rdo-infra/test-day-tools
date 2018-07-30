@@ -1,0 +1,8 @@
+- name: Install ceph-luminous
+  hosts: openstack_nodes
+  tasks:
+    - name: Install centos-release-ceph-luminous and centos-release-storage-common
+      script: install_ceph_luminous.sh
+      register: out
+
+    - debug: var=out.stdout_lines
